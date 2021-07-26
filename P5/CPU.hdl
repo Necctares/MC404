@@ -1,0 +1,44 @@
+
+CHIP CPU {
+
+    IN  inM[16],         // M value input  (M = contents of RAM[A])
+        instruction[16], // Instruction for execution
+        reset;           // Signals whether to re-start the current
+                         // program (reset==1) or continue executing
+                         // the current program (reset==0).
+
+    OUT outM[16],        // M value output
+        writeM,          // Write to M? 
+        addressM[15],    // Address in data memory (of M)
+        pc[15];          // address of next instruction
+
+    PARTS:
+
+Not(in=instruction[15] ,out=notInst15);
+Or(a=notInst15 ,b=instruction[5] ,out=loadRA);
+And(a=instruction[15] ,b=instruction[4] ,out=loadRD);
+Mux16(a=saidaALU ,b=instruction ,sel=notInst15 ,out=entradaRA); //Mux Registrador A
+
+ARegister(in=entradaRA ,load=loadRA ,out=saidaRA,out[0..14]=addressM);
+DRegister(in=saidaALU ,load=loadRD ,out=saidaRD);
+
+And(a=instruction[15],b=instruction[12],out=seletorAM);
+Mux16(a=saidaRA ,b=inM ,sel=seletorAM ,out=aluY); //Mux Seletor Y ALU, Registrador A ou Valor inM
+ALU(x=saidaRD ,y=aluY ,zx=instruction[11] ,nx=instruction[10] ,zy=instruction[9] ,ny=instruction[8] ,f=instruction[7] ,no=instruction[6] ,out=saidaALU,out=outM ,zr=zr ,ng=ng);
+
+And(a=instruction[15],b=instruction[3],out=writeM);
+PC(in=saidaRA,load=loadPC,inc=true,reset=reset,out[0..14]=pc);
+
+//Logica jgt,jeq,jlt,jmp
+Not(in=ng,out=positivo);
+Not(in=zr,out=nZr);
+And(a=instruction[15],b=instruction[0],out=jgt);
+And(a=positivo,b=nZr,out=entradaCompJgt);
+And(a=jgt,b=entradaCompJgt,out=comp1);
+And(a=instruction[15],b=instruction[1],out=jeq);
+And(a=jeq,b=zr,out=comp2);
+And(a=instruction[15],b=instruction[2],out=jlt);
+And(a=jlt,b=ng,out=comp3);
+Or(a=comp1,b=comp2,out=comp12);
+Or(a=comp3,b=comp12,out=loadPC);
+}

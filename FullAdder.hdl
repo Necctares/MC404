@@ -1,0 +1,18 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/02/FullAdder.hdl
+
+
+CHIP FullAdder {
+    IN a, b, c;  
+    OUT sum,     
+        carry;   
+
+    PARTS:
+	Xor(a=a, b=b, out=w1);
+	Xor(a=w1, b=c, out=sum);
+	And(a=a, b=b, out=w2);
+	And(a=c, b=w1, out=w3);
+	Or(a=w3, b=w2, out=carry);	
+}
